@@ -17,10 +17,11 @@ In search.py, you will implement generic search algorithms which are called by
 Pacman agents (in searchAgents.py).
 """
 
-import util
-import node
-import sys
+import util, sys
+from node import Node
+from util import *
 
+# http://ai.berkeley.edu/project_overview.html
 class SearchProblem:
     """
     This class outlines the structure of a search problem, but doesn't implement
@@ -74,63 +75,129 @@ def tinyMazeSearch(problem):
     w = Directions.WEST
     return  [s, s, w, s, w, w, s, w]
 
+
+def bsfOrDfs(fringe, problem):
+        fringe.push(Node(problem.getStartState()))
+        # Hash de estats expandits
+        generated = {}
+
+        while True:
+            if fringe.isEmpty():
+                print "No solution."
+                sys.exit(-1)
+
+            n = fringe.pop()
+            # n passa a ser un nodo expandit
+            generated[n.state] = []
+
+            for s, a, c in problem.getSuccessors(n.state):
+                ns = Node(s, n, a, c)
+                if s not in generated.keys():
+                    if problem.isGoalState(ns.state):
+                        print "Solution"
+                        return ns.path()
+
+                    fringe.push(ns)
+                    generated[s] = []
+
+
 def depthFirstSearch(problem):
-    fringe = util.Stack()
-    fringe.push(node.Node(problem.getStartState()))
-    generated = {}
-    while True:
-        if fringe.isEmpty(): print 'no solution' ; sys.exit(-1)
-        n = fringe.pop()
-        generated[n.state] = n.state
-        for s,a,c in problem.getSuccessors(n.state):
-             ns = node.Node(s,n,a,c)
-             if s not in generated:
-                 if problem.isGoalState(ns.state): return ns.path()
-                 fringe.push(ns)
-                 generated[s] = []
+    """
+    Search the deepest nodes in the search tree first.
+
+    Your search algorithm needs to return a list of actions that reaches the
+    goal. Make sure to implement a graph search algorithm.
+
+    To get started, you might want to try some of these simple commands to
+    understand the search problem that is being passed in:
+
+    print "Start:", problem.getStartState()
+    print "Is the start a goal?", problem.isGoalState(problem.getStartState())
+    print "Start's successors:", problem.getSuccessors(problem.getStartState())
+    """
+    "*** YOUR CODE HERE ***"
+    return bsfOrDfs(Stack(), problem)
 
 
 def breadthFirstSearch(problem):
-    fringe = util.Queue()
-    fringe.push(node.Node(problem.getStartState()))
-    generated = {}
-    while True:
-        if fringe.isEmpty(): print 'no solution' ; sys.exit(-1)
-        n = fringe.pop()
-        generated[n.state] = n.state
-        for s,a,c in problem.getSuccessors(n.state):
-             ns = node.Node(s,n,a,c)
-             if s not in generated:
-                 if problem.isGoalState(ns.state): return ns.path()
-                 fringe.push(ns)
-                 generated[s] = []
+    """Search the shallowest nodes in the search tree first."""
+    "*** YOUR CODE HERE ***"
+    # Inicialitzar fringe
+    return bsfOrDfs(Queue(), problem)
 
 def uniformCostSearch(problem):
-    def push(n):
-        fringe.push(n,n.cost)
-        generated[n.state] = [n,'F']
-    fringe = util.PriorityQueue()
+    """Search the node of least total cost first."""
+    "*** YOUR CODE HERE ***"
     generated = {}
-    n = node.Node(problem.getStartState())
-    push(n)
+    fringe = PriorityQueue()
+    n = Node(problem.getStartState(),0)
+    fringe.push(n, 0)
+    generated[n.state] = [n, "F"]
+
     while True:
-        if fringe.isEmpty(): print 'no solution' ; sys.exit(-1)
+        if fringe.isEmpty():
+            print "No solution."
+            sys.exit(-1)
+
         n = fringe.pop()
-    	if problem.isGoalState(n.state): return n.path()
-    	if generated[n.state][1] != 'E':
-                generated[n.state] = [n, 'E']
-                for s,a,c in problem.getSuccessors(n.state):
-                    ns = node.Node(s,n,a,n.cost+c)
-                    if ns.state not in generated:
-                        push(ns)
-                    elif generated[ns.state][1] == 'F' and ns.cost < generated[ns.state][0].cost:
-                        push(ns)
+        if generated[n.state][1] == "E": break
+
+        if problem.isGoalState(n.state):
+            return n.path()
+
+        # n passa a ser un nodo expandit
+        generated[n.state] = [n, "E"]
+
+        for s, a, c in problem.getSuccessors(n.state):
+            ns = Node(s, n, a, n.cost + c)
+            if s not in generated.keys():
+                fringe.push(ns, ns.cost)
+                generated[s] = [ns, "F"]
+            elif generated[s][0].cost > ns.cost:
+                fringe.push(ns, ns.cost)
+                generated[s] = [ns, "F"]
 
 def nullHeuristic(state, problem=None):
+    """
+    A heuristic function estimates the cost from the current state to the nearest
+    goal in the provided SearchProblem.  This heuristic is trivial.
+    """
     return 0
 
 def aStarSearch(problem, heuristic=nullHeuristic):
-    util.raiseNotDefined()
+    """Search the node that has the lowest combined cost and heuristic first."""
+    "*** YOUR CODE HERE ***"
+    generated = {}
+    fringe = PriorityQueue()
+    n = Node(problem.getStartState(),0)
+    fringe.push(n, 0)
+    generated[n.state] = [n, "F"]
+
+    while True:
+        if fringe.isEmpty():
+            print "No solution."
+            sys.exit(-1)
+
+        n = fringe.pop()
+        if generated[n.state][1] == "E": break
+
+        if problem.isGoalState(n.state):
+            return n.path()
+
+        # n passa a ser un nodo expandit
+        generated[n.state] = [n, "E"]
+
+        for s, a, c in problem.getSuccessors(n.state):
+            #path-max
+            fn = max(n.cost + c + heuristic(s, problem), n.cost + heuristic(n.state, problem))
+            ns = Node(s, n, a, fn)
+            if s not in generated.keys():
+                fringe.push(ns, ns.cost)
+                generated[s] = [ns, "F"]
+            elif generated[s][0].cost > ns.cost: # Saber perque no cal controlar que esta al fringe
+                fringe.push(ns, ns.cost)
+                generated[s] = [ns, "F"]
+
 
 # Abbreviations
 bfs = breadthFirstSearch
