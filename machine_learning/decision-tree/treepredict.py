@@ -136,61 +136,7 @@ def buildtree(part, scoref=gini_impurity, beta=0):
         return decisionnode(results=unique_counts(part))
 
 
-def buildtree_iterative(part, scoref=gini_impurity, beta=0):
-    # Represent the tree as an array where the left child is at (2x + 1) position
-    # where x is the current position of the array
-    # Each position contains a decisionnode
-    tree = [ None for _ in range(len(part) * len(part[0]))]
-
-    # Get left(true sets) child position
-    left = lambda x : 2 * x + 1
-    # Get right(false sets) child positon
-    right = lambda x : 2 * x + 2
-    # Get parent position
-    parent = lambda x : (x - 2) / 2 if x % 2 == 0 else (x - 1) / 2
-
-    # Stack that will contains the (set, tree position)
-    fringe = []
-
-    # Initial partition
-    criteria, best_sets = get_best_partition(part, scoref)
-
-    # Set the root node
-    tree[0] = decisionnode(col=criteria[1], value=criteria[0])
-
-    fringe.append((best_sets[1], right(0))) # False
-    fringe.append((best_sets[0], left(0))) # True
-
-    while len(fringe) != 0:
-        current_part, tree_pos = fringe.pop()
-
-        if len(current_part) == 0:
-            tree[tree_pos] = decisionnode()
-        else:
-            current_score = scoref(current_part)
-            if current_score > beta:
-                criteria, best_sets = get_best_partition(current_part, scoref)
-
-                tree[tree_pos] = decisionnode(col=criteria[1], value=criteria[0])
-
-                # If false -> right child
-                fringe.append((best_sets[1], right(tree_pos))) # False
-                # if true -> left child
-                fringe.append((best_sets[0], left(tree_pos))) # True
-            else:
-                tree[tree_pos] = decisionnode(results=unique_counts(current_part))
-
-        # Set the parent
-        p = tree[parent(tree_pos)]
-        if tree_pos % 2 == 0: # false set of parent
-            p.fb = tree[tree_pos]
-        else: # True set of parent
-            p.tb = tree[tree_pos]
-
-
-    return tree[0]
-
-def buildtree_iterative_nodes(part, scoref=gini_impurity, beta=0):
+def buildtree_iterative_w_nodes(part, scoref=gini_impurity, beta=0):
 
     # Stack that will contains the (set, tree position)
     fringe = []
@@ -233,6 +179,88 @@ def buildtree_iterative_nodes(part, scoref=gini_impurity, beta=0):
     return root
 
 
+def buildtree_iterative_l_nodes(part, scoref=gini_impurity, beta=0):
+
+    # Stack that will contains the (set, tree position)
+    fringe = []
+
+    # Initial partition
+    criteria, best_sets = get_best_partition(part, scoref)
+
+    # Set the root node
+    fb = decisionnode(answer=False)
+    tb = decisionnode(answer=True)
+    root = decisionnode(col=criteria[1], value=criteria[0], tb=tb, fb=fb)
+
+    fb.parent = root
+    tb.parent = root
+
+    fringe.append(fb) # False
+    fringe.append(tb) # True
+
+    while len(fringe) != 0:
+        current_node = fringe.pop()
+        current_partition = get_node_partition(current_node, part)
+        current_score = scoref(current_partition)
+
+        if current_score > beta:
+            criteria, best_sets = get_best_partition(current_partition, scoref)
+
+            current_node.col=criteria[1]
+            current_node.value=criteria[0]
+
+            # If false
+            fb = decisionnode(parent=current_node, answer=False)
+            current_node.fb = fb
+            fringe.append(fb) # False
+
+            # if true
+            tb = decisionnode(parent=current_node, answer=True)
+            current_node.tb = tb
+            fringe.append(tb) # True
+        else:
+            current_node.results=unique_counts(current_partition)
+
+
+    return root
+
+def get_node_partition(node, source_partition):
+    answer_list = [node.answer] # Will work as stack
+    parent = node.parent
+
+    # get parent and answers to get to him
+    while True:
+        if parent.parent == None: break
+        answer_list.append(parent.answer)
+        parent = parent.parent
+
+    partition = source_partition
+
+    # generate partition
+    while len(answer_list) != 0:
+        true_set, false_set = divideset(partition, parent.col, parent.value)
+        if answer_list.pop():
+            partition = true_set
+            parent = parent.tb
+        else:
+            partition = false_set
+            parent = parent.fb
+
+    return partition
+
+def printtree(tree,indent=''):
+    # Is this a leaf node?
+    if tree.results!=None:
+        print str(tree.results)
+    else:
+        # Print the criteria
+        print str(tree.col) + ':' + str(tree.value) + ' ? '
+        # Print the branches
+        print indent + 'True-> ',
+        printtree(tree.tb, indent + '    ')
+        print indent + 'False-> ',
+        printtree(tree.fb, indent + '    ')
+
 # ------------------------ #
 #        Entry point       #
 # ------------------------ #
@@ -266,21 +294,4 @@ if __name__ == '__main__':
     print unique_counts(protos)
 
     # **** Your code here ***
-
-    print str(buildtree_iterative_nodes(protos))
-
-    # print entropy(protos)
-    #
-    # res = divideset(protos, 2, "yes")
-    # print "------ Read FAQ? ---------------------------------------"
-    # print "------ Yes ---------------------------------------------"
-    # print  str(res[0])
-    # print "------- No ---------------------------------------------"
-    # print  str(res[1])
-    #
-    # res = divideset(protos, 3, 20)
-    # print "\n------ Pages? -------------------------------------------------"
-    # print "------ Pages > 20 ---------------------------------------------"
-    # print  str(res[0])
-    # print "------ Pages < 20 ---------------------------------------------"
-    # print  str(res[1])
+    printtree(buildtree_iterative_l_nodes(protos))
