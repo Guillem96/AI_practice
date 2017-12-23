@@ -288,6 +288,7 @@ class CornersProblem(search.SearchProblem):
         # Please add any code here which you would like to use
         # in initializing the problem
         "*** YOUR CODE HERE ***"
+        self._visited, self._visitedlist = {}, []
         self.corners_state = [0 for _ in self.corners]
         for index, corner in enumerate(self.corners):
             if not startingGameState.hasFood(*corner):
@@ -309,7 +310,17 @@ class CornersProblem(search.SearchProblem):
         Returns whether this search state is a goal state of the problem.
         """
         "*** YOUR CODE HERE ***"
-        return all(x == 1 for x in state[1])
+        isGoal = all(x == 1 for x in state[1])
+
+         # For display purposes only
+        if isGoal:
+            self._visitedlist.append(state[0])
+            import __main__
+            if '_display' in dir(__main__):
+                if 'drawExpandedCells' in dir(__main__._display): #@UndefinedVariable
+                    __main__._display.drawExpandedCells(self._visitedlist) #@UndefinedVariable
+
+        return isGoal
 
     def getSuccessors(self, state):
         """
@@ -339,6 +350,11 @@ class CornersProblem(search.SearchProblem):
 
                 cost = self.costFn(nextState)
                 successors.append( ( (nextState, tuple(food_eaten)), action, cost) )
+
+        # Bookkeeping for display purposes
+        if state not in self._visited:
+            self._visited[state] = True
+            self._visitedlist.append(state[0])
 
         self._expanded += 1 # DO NOT CHANGE
         return successors
@@ -374,7 +390,16 @@ def cornersHeuristic(state, problem):
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
 
     "*** YOUR CODE HERE ***"
-    return 0 # Default to trivial solution
+    total_manhattan = 0
+    position = state[0]
+
+    dist = 0
+
+    for index, eaten in enumerate(state[1]):
+        if eaten == 0:
+            dist += util.manhattanDistance(state[0], corners[index])
+
+    return dist ** 175
 
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"

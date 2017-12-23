@@ -27,6 +27,28 @@ class WCNFFormula(object):
         self._sum_soft_weights = 0
         self.header = []  # type: List[str]
 
+    @staticmethod
+    def formula_from_file(file_path):
+        with open(file_path, 'r') as stream:
+            f = WCNFFormula.__read_stream(stream)
+            return f
+
+    @staticmethod
+    def __read_stream(stream):
+        f = WCNFFormula()
+        hard_cost = 0
+        reader = (l for l in (ll.strip() for ll in stream) if l)
+        for line in reader:
+            l = line.split()
+            if l[0] == "p":
+                f.num_vars = int(l[2])
+                hard_cost = int(l[4])
+            elif l[0] != "c":
+                cost = int(l[0])
+                literals = map(int, l[1:-1])
+                f.add_clause(literals, 0 if cost == hard_cost else cost)
+        return f
+
     @property
     def num_clauses(self):
         """num_clauses() -> int
@@ -175,6 +197,9 @@ class WCNFFormula(object):
                 raise WCNFException("Clause contains variable {0}, not defined"
                                     " by new_var()".format(var))
 
+    def to_1_3(self):
+        return formula_to_1_3_wpm(self)
+
     def __str__(self):
         s_io = io.StringIO()
         self.write_dimacs(stream=s_io)
@@ -212,9 +237,57 @@ def formula_to_1_3_wpm(formula):
     new_f = WCNFFormula()
     new_f.header = list(formula.header)
     new_f.header.append(" **** 1,3-WPM transformed formula ****")
-    new_f.header.append("")
+
+    new_f.num_vars = formula.num_vars
 
     # **** Your code here ****
-    raise NotImplementedError()
+    for soft_clause in formula.soft:
+        __convert_soft(new_f, soft_clause)
+
+    for hard_clause in formula.hard:
+        __convert_hard(new_f, hard_clause)
 
     return new_f
+
+
+def __convert_soft(f, soft):
+    # Generate new soft
+    new_literal = f.new_var()
+    f.add_clause([new_literal * -1],  soft[0])
+
+    soft[1].append(new_literal)
+
+    if len(soft[1]) > 3:
+        __convert_hard(f, soft[1])
+
+
+def __convert_hard(f, hard):
+    clause = []
+
+    if len(hard) <= 3:
+        f.add_clause(hard, 0)
+        return
+
+    clause.append(hard[0])
+    literals_left = len(hard) - 1
+
+    for literal in hard[1:]:
+        if literals_left == 1 or len(clause) == 1:
+            clause.append(literal)
+            literals_left -= 1
+
+        elif len(clause) == 2:
+            literal_aux = f.new_var()
+            clause.append(literal_aux)
+            f.add_clause(clause,0)
+
+            # Generate new clause with the negated aux literal
+            clause = [literal_aux * (-1)]
+            clause.append(literal)
+            literals_left -= 1
+
+    f.add_clause(clause, 0)
+
+if __name__ == '__main__':
+    formula = WCNFFormula.formula_from_file("formula_example.wcnf")
+    formula.to_1_3().write_dimacs()
