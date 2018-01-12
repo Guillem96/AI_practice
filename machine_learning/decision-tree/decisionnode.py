@@ -11,19 +11,5 @@ class decisionnode:
         self.parent = parent
         self.answer = answer
 
-    def __str__(self):
-        current_node = self
-        result = ""
-
-        if current_node.value != None:
-            result += str(self.value) + " - " + str(self.col) + "\n"
-        elif current_node.results:
-            result += str(current_node.results) + "\n"
-
-        if current_node.tb != None:
-            result += "True: " + str(current_node.tb)
-
-        if current_node.fb != None:
-            result += "False: " + str(current_node.fb)
-
-        return result
+    def is_leaf(self):
+        return self.results != None 

@@ -6,6 +6,7 @@ import itertools
 import math
 import sys
 import time
+import random
 from decisionnode import decisionnode
 
 # ---- t3 ----
@@ -224,7 +225,7 @@ def classify(obj, tree):
     def split_num(prot): return prot[current_node.col] >= current_node.value
     def split_str(prot): return prot[current_node.col] == current_node.value
 
-    while current_node.tb != None and current_node.fb != None:
+    while not current_node.isLeaf():
         split_fn = split_num if isinstance(current_node.value, (int, float)) else split_str
         if split_fn(obj):
             current_node = current_node.tb
@@ -233,6 +234,24 @@ def classify(obj, tree):
 
     return current_node.results
 
+def roulette(results, seed=time.time()):
+    total = float(sum(results.itervalues()))
+    probs = [results[results.keys()[0]] / total]
+    
+    for k in results.keys()[1:-1]:
+        probs.append(probs[-1] + (results[k] / total))
+
+    probs.append(1.0)
+
+    random.seed(seed)
+    rand = random.random()
+
+    for i, p in enumerate(probs):
+        if p >= rand:
+            print rand
+            print probs
+            print results.keys()[i]
+            return results.keys()[i]
 
 # ------------------------ #
 #        Entry point       #
@@ -263,5 +282,4 @@ if __name__ == '__main__':
     protos = read_stream(options.prototypes_file, options.data_sep, True)
 
     # **** Your code here ***
-    tree = buildtree(protos)
-    printtree(tree)
+    roulette(unique_counts(protos))
