@@ -257,7 +257,7 @@ def __convert_soft(f, soft):
 
     soft[1].append(new_literal)
 
-    if len(soft[1]) > 3:
+    if len(soft[1]) > 1:
         __convert_hard(f, soft[1])
 
 

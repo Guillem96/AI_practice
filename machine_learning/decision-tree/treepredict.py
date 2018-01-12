@@ -49,7 +49,6 @@ def unique_counts(part):
 
 
 # ---- t5 ----
-
 def gini_impurity(part):
     total = float(len(part))
     counts = unique_counts(part)
@@ -58,7 +57,6 @@ def gini_impurity(part):
     return 1 - sum((p * p for p in probs))
 
 # ---- t6 ----
-
 def entropy(rows):
     from math import log
     # Define log2
@@ -94,7 +92,7 @@ def imp_increment(set1, set2, imp_function=gini_impurity):
             p1 * imp_function(set1) - \
             p2 * imp_function(set2)
 
-# ---- t9 ----
+# Donat un set d items retorna la seva millor particio
 def get_best_partition(part, imp_function=gini_impurity):
     # Set up some variables to track the best criteria
     best_gain = 0.0     # Best imp increment
@@ -114,9 +112,7 @@ def get_best_partition(part, imp_function=gini_impurity):
 
     return criteria, best_sets
 
-"""
-    beta: Impuresa amb la qual estem satisfets en una fulla
-"""
+# ---- t9 ----
 def buildtree(part, scoref=gini_impurity, beta=0):
     if len(part) == 0: return decisionnode()
 
@@ -130,56 +126,14 @@ def buildtree(part, scoref=gini_impurity, beta=0):
             # Repeat the action for left and right set
             true_tree = buildtree(best_sets[0], scoref, beta)
             false_tree = buildtree(best_sets[1], scoref, beta)
-
-        return decisionnode(col=criteria[1], value=criteria[0], tb=true_tree, fb=false_tree)
+            return decisionnode(col=criteria[1], value=criteria[0], tb=true_tree, fb=false_tree)
+        else:
+            return decisionnode(results=unique_counts(part))
     else:
         return decisionnode(results=unique_counts(part))
 
-
-def buildtree_iterative_w_nodes(part, scoref=gini_impurity, beta=0):
-
-    # Stack that will contains the (set, tree position)
-    fringe = []
-
-    # Initial partition
-    criteria, best_sets = get_best_partition(part, scoref)
-
-    # Set the root node
-    fb = decisionnode(part=best_sets[1])
-    tb = decisionnode(part=best_sets[0])
-    root = decisionnode(col=criteria[1], value=criteria[0], tb=tb, fb=fb)
-
-    fringe.append(fb) # False
-    fringe.append(tb) # True
-
-    while len(fringe) != 0:
-        current_node = fringe.pop()
-
-        current_score = scoref(current_node.part)
-
-        if current_score > beta:
-            criteria, best_sets = get_best_partition(current_node.part, scoref)
-
-            current_node.col=criteria[1]
-            current_node.value=criteria[0]
-
-            # If false
-            fb = decisionnode(part=best_sets[1])
-            current_node.fb = fb
-            fringe.append(fb) # False
-
-            # if true
-            tb = decisionnode(part=best_sets[0])
-            current_node.tb = tb
-            fringe.append(tb) # True
-        else:
-            current_node.results=unique_counts(current_node.part)
-
-
-    return root
-
-
-def buildtree_iterative_l_nodes(part, scoref=gini_impurity, beta=0):
+# ---- t10 ----
+def buildtree_iterative(part, scoref=gini_impurity, beta=0):
 
     # Stack that will contains the (set, tree position)
     fringe = []
@@ -205,19 +159,22 @@ def buildtree_iterative_l_nodes(part, scoref=gini_impurity, beta=0):
 
         if current_score > beta:
             criteria, best_sets = get_best_partition(current_partition, scoref)
+            if criteria:
+                current_node.col=criteria[1]
+                current_node.value=criteria[0]
 
-            current_node.col=criteria[1]
-            current_node.value=criteria[0]
+                # If false
+                fb = decisionnode(parent=current_node, answer=False)
+                current_node.fb = fb
+                fringe.append(fb) # False
 
-            # If false
-            fb = decisionnode(parent=current_node, answer=False)
-            current_node.fb = fb
-            fringe.append(fb) # False
+                # if true
+                tb = decisionnode(parent=current_node, answer=True)
+                current_node.tb = tb
+                fringe.append(tb) # True
+            else:
+                current_node.results=unique_counts(current_partition)
 
-            # if true
-            tb = decisionnode(parent=current_node, answer=True)
-            current_node.tb = tb
-            fringe.append(tb) # True
         else:
             current_node.results=unique_counts(current_partition)
 
@@ -229,8 +186,7 @@ def get_node_partition(node, source_partition):
     parent = node.parent
 
     # get parent and answers to get to him
-    while True:
-        if parent.parent == None: break
+    while parent.parent != None:
         answer_list.append(parent.answer)
         parent = parent.parent
 
@@ -248,18 +204,35 @@ def get_node_partition(node, source_partition):
 
     return partition
 
+# ---- t11 ----
 def printtree(tree,indent=''):
     # Is this a leaf node?
     if tree.results!=None:
         print str(tree.results)
     else:
         # Print the criteria
-        print str(tree.col) + ':' + str(tree.value) + ' ? '
+        print str(tree.col) + ':' + str(tree.value) + '?'
         # Print the branches
-        print indent + 'True-> ',
-        printtree(tree.tb, indent + '    ')
-        print indent + 'False-> ',
-        printtree(tree.fb, indent + '    ')
+        print indent + 'True->',
+        printtree(tree.tb, indent + '  ')
+        print indent + 'False->',
+        printtree(tree.fb, indent + '  ')
+
+# ---- t12 ----
+def classify(obj, tree):
+    current_node = tree
+    def split_num(prot): return prot[current_node.col] >= current_node.value
+    def split_str(prot): return prot[current_node.col] == current_node.value
+
+    while current_node.tb != None and current_node.fb != None:
+        split_fn = split_num if isinstance(current_node.value, (int, float)) else split_str
+        if split_fn(obj):
+            current_node = current_node.tb
+        else:
+            current_node = current_node.fb
+
+    return current_node.results
+
 
 # ------------------------ #
 #        Entry point       #
@@ -288,10 +261,7 @@ if __name__ == '__main__':
 
     # Example code
     protos = read_stream(options.prototypes_file, options.data_sep, True)
-    for p in protos:
-        print p
-
-    print unique_counts(protos)
 
     # **** Your code here ***
-    printtree(buildtree_iterative_l_nodes(protos))
+    tree = buildtree(protos)
+    printtree(tree)
