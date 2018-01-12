@@ -130,7 +130,26 @@ def nullHeuristic(state, problem=None):
     return 0
 
 def aStarSearch(problem, heuristic=nullHeuristic):
-    util.raiseNotDefined()
+    def push(n):
+        fringe.push(n,n.cost)
+        generated[n.state] = [n,'F']
+    fringe = util.PriorityQueue()
+    generated = {}
+    n = node.Node(problem.getStartState())
+    push(n)
+    while True:
+        if fringe.isEmpty(): print 'no solution' ; sys.exit(-1)
+        n = fringe.pop()
+        if problem.isGoalState(n.state): return n.path()
+        if generated[n.state][1] != 'E': #Si no esta expandit
+            generated[n.state] = [n, 'E']
+            for s,a,c in problem.getSuccessors(n.state):
+                fn = max(n.cost + c + heuristic(s, problem), n.cost + heuristic(n.state, problem)) #pathmax
+                ns = Node(s,n,a,fn)
+                if ns.state not in generated:
+                    push(ns)
+                elif ns.cost < generated[ns.state][0].cost: # guillem - >Saber perque no cal controlar que esta al fringe
+                    push(ns)
 
 # Abbreviations
 bfs = breadthFirstSearch
