@@ -235,6 +235,7 @@ def classify(obj, tree):
     return current_node.results
 
 
+
 def roulette(results, seed=time.time()):
     total = float(sum(results.itervalues()))
     probs = [results[results.keys()[0]] / total]
@@ -251,7 +252,7 @@ def roulette(results, seed=time.time()):
         if p >= rand:
             return results.keys()[i]
 
-
+# ---- t16 ----
 def prune(tree, beta):
     if not tree.tb.is_leaf():
         prune(tree.tb, beta)
