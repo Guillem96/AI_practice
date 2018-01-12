@@ -15,4 +15,3 @@ digg,NewZealand,yes,12,Basic
 slashdot,UK,no,21,None
 google,UK,yes,18,Basic
 kiwitobes,France,yes,19,Basic
-kiwitobes,France,yes,19,Premium

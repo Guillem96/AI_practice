@@ -68,7 +68,7 @@ def entropy(rows):
 
     probs = (v / total for v in results.itervalues())
 
-    return -sum((p * log2(p) for p in probs))
+    return sum((-p * log2(p) for p in probs))
 
 # ---- t7 ----
 def divideset(part, column, value):
@@ -234,10 +234,11 @@ def classify(obj, tree):
 
     return current_node.results
 
+
 def roulette(results, seed=time.time()):
     total = float(sum(results.itervalues()))
     probs = [results[results.keys()[0]] / total]
-    
+
     for k in results.keys()[1:-1]:
         probs.append(probs[-1] + (results[k] / total))
 
@@ -248,10 +249,30 @@ def roulette(results, seed=time.time()):
 
     for i, p in enumerate(probs):
         if p >= rand:
-            print rand
-            print probs
-            print results.keys()[i]
             return results.keys()[i]
+
+
+def prune(tree, beta):
+    if not tree.tb.is_leaf():
+        prune(tree.tb, beta)
+
+    if not tree.fb.is_leaf():
+        prune(tree.fb, beta)
+
+    if tree.tb.is_leaf() and tree.fb.is_leaf():
+        # Build a combined dataset
+        tb, fb = [], []
+        for v, c in tree.tb.results.items( ):
+            tb += [[v]] * c
+        for v, c in tree.fb.results.items( ):
+            fb += [[v]] * c
+
+        # Test the reduction in entropy
+        delta = imp_increment(tb, fb, entropy)
+        if delta < beta:
+            # Merge the branches
+            tree.tb, tree.fb = None, None
+            tree.results = unique_counts(tb + fb)
 
 # ------------------------ #
 #        Entry point       #
@@ -282,4 +303,7 @@ if __name__ == '__main__':
     protos = read_stream(options.prototypes_file, options.data_sep, True)
 
     # **** Your code here ***
-    roulette(unique_counts(protos))
+    tree = buildtree_iterative(protos)
+    printtree(tree)
+    prune(tree, 1)
+    printtree(tree)
