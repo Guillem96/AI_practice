@@ -314,22 +314,22 @@ def fill_missingdata(data,missingvalue=None):
                     data[row][col]=roulette(col_info[col][1])
                 else:
                     data[row][col]=col_info[col][1]
-
-def find_type(data,missingvalue):
-    for value in data:
+#Busca el tipo de la lista
+def find_type(data_list,missingvalue):
+    for value in data_list:
          if not isinstance(value, (int, float)) and value != missingvalue:
                 return 'str'
     return 'num' 
-
-def md_uniquecounts(data,missingvalue):
+#Cuenta el numero de cada valor en la lista
+def md_uniquecounts(data_list,missingvalue):
     counts={}
-    for value in data:
+    for value in data_list:
         if value != missingvalue:
             counts[value] = counts.get(value, 0) + 1
     return counts
-
-def median(data,missingvalue):
-    filtered_data=list(filter(lambda x: x != missingvalue, data))
+#La mediana de la lista (contando que es una lista de numeros)
+def median(data_list,missingvalue):
+    filtered_data=list(filter(lambda x: x != missingvalue, data_list))
     return filtered_data[len(filtered_data)/2]
 
 
