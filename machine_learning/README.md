@@ -12,3 +12,4 @@ A l'hora de classificar un element donat un arbre el sistema utilitzat és que v
 Decisicio de implementació missing data
 
 Hem decidit que enlloc de construir l'arbre amb la informació faltant i suplir-la en el classificador suplir la informació abans de construir l'arbre. Per fer-ho em separat en valors númerics i valors que no ho són. Per suplir els valors numerics simplement hem agafat la mediana dels valors no faltants de la seva columna i per els valors no numerics hem generat un diccionari de les proporcions dels valors no faltants de la seva columna i generant un valor aleatori tenint en compte aquestes proporcions. 
+Hem decidit utilitzar la mediana sobre la moda en els valors numèrics ja que la moda pot ser-ho poc i desequilibrar l'arbre i en canvi la mediana pot donar un valor més neutre i que segons la majoría de atributs númerics te menor impacte en l'arbre. 
