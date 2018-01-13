@@ -1,0 +1,16 @@
+# training set lenght: 1044
+# test set lenght: 683
+# beta range: 0-0.5
+# cross validation distribution: 50.0%  of training to test
+# cross validation tries: 20
+0.0	96.36
+0.05	96.36
+0.1	96.46
+0.15	96.17
+0.2	95.79
+0.25	95.31
+0.3	94.16
+0.35	90.52
+0.4	88.22
+0.45	81.32
+0.5	22.22
