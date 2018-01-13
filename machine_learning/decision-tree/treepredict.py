@@ -249,7 +249,7 @@ def roulette(results, seed=time.time()):
     for i, p in enumerate(probs):
         if p >= rand:
             return results.keys()[i]
-def test_preformance(testset,trainingset,beta=0,trials=50,testprob=0.2):
+def test_preformance(testset,trainingset,beta=0,trials=1,testprob=0.2):
     error=0.0
     tree = cross_validate(trainingset,beta,trials,testprob)
     for prot in testset:
@@ -356,7 +356,7 @@ def prune(tree, beta):
             tree.tb, tree.fb = None, None
             tree.results = unique_counts(tb + fb)
 # ---- graphics ----
-def gnuplotformat(training,test,beta_max=1.0,beta_range=1.0,tries_per_beta=1.0,cross_tries=5,cross_prob=0.2):
+def gnuplotformat(training,test,beta_max=1.0,beta_range=1.0,cross_tries=5,cross_prob=0.2):
     print '# ' + 'training set lenght: ' + str(len(training))
     print '# ' + 'test set lenght: ' + str(len(test))
     print '# ' + 'beta range: 0-' + str(beta_max)
@@ -364,12 +364,9 @@ def gnuplotformat(training,test,beta_max=1.0,beta_range=1.0,tries_per_beta=1.0,c
     print '# ' + 'cross validation tries: ' + str(cross_tries)
     print '# beta   preformance'
     for i in xrange(beta_range+1):
-        beta=beta_max*i/beta_range
-        error_prob=0.0
-        for i in xrange(tries_per_beta):
-            error_prob+=test_preformance(training,test,beta,cross_tries,cross_prob)
-        error_total= error_prob/tries_per_beta
-        print str(beta) + '\t' "{0:.2f}".format((1-error_total)*100) 
+        beta=beta_max*i/beta_range #Calcular la beta de la iteracion
+        error_prob=test_preformance(training,test,beta,cross_tries,cross_prob)
+        print str(beta) + '\t' "{0:.2f}".format((1-error_prob)*100) 
 # ------------------------ #
 #        Entry point       #
 # ------------------------ #
@@ -403,6 +400,6 @@ if __name__ == '__main__':
     #error_prob=test_preformance(training,test,0,100,0.2)
     #print 'Test preformance: ' "{0:.2f}".format((1-error_prob)*100) + '%'
     #fill_missingdata(protos,'5more')
-    gnuplotformat(training,test,0.5,10,10,20,0.5)
+    gnuplotformat(training,test,0.5,10,20,0.5)
 
 
