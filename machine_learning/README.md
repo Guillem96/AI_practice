@@ -1,4 +1,4 @@
-Decisicions de implementació Decission trees:
+Decisicions de implementació de el test preformance i cross validation
 
 
 A l'hora de fer l'arbre sobre el set d'entrenament hem decidit utilitzar crossvalidation, per fer-ho em optat per utilitzar una proporció que indicarà sobra quina part de les dades es montarà l'arbre i sobre quina es testejarà abans de testejar-ho en el test real. Hem decidit utilitzar una proporció i generar la part de les dades que utilitzarem per testejar sobre la resta del training set anant generant números aleatoris i anar distribuint el training set en les dades amb les que construirem l'arbre i les dades sobre el que el testejarem. Aquesta tasca la repetirem un nombre que pasarem per parametre de vegades i triarem l'arbre que més percentatje d'encerts ha aconseguit. Finalment aquest arbre el testejarem sobre la part que haviam deixat en un principi a part com a test i que no em utilitzat en cap moment a l'hora de construir l'arbre. El percentatje d'encerts que ens surti serà el que donarem però en el cas de que tinguesam de construir l'arbre per un usuari final, l'arbre final el construiriam sobre tot el set de dades, test inclós. 
