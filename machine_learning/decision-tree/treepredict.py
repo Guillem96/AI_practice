@@ -386,5 +386,5 @@ if __name__ == '__main__':
     # **** Your code here ***
     training, test = divide_data(protos,0.2)
     error_prob=test_preformance(training,test,0.3,100,0.2)
-    print 'Test preformance: ' + str((1-error_prob)*100) + '%'
+    print 'Test preformance: ' + str(float('{0:.2f'.format.(1-error_prob)*100)) + '%'
     fill_missingdata(protos,'5more')
