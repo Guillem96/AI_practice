@@ -10,7 +10,6 @@ import random
 from decisionnode import decisionnode
 
 # ---- t3 ----
-
 def read_file(file_path, data_sep=' ', ignore_first_line=False):
     with open(file_path, 'r') as f:
         return read_stream(f, data_sep, ignore_first_line)
@@ -235,7 +234,6 @@ def classify(obj, tree):
     return current_node.results
 
 
-
 def roulette(results, seed=time.time()):
     total = float(sum(results.itervalues()))
     probs = [results[results.keys()[0]] / total]
@@ -251,6 +249,54 @@ def roulette(results, seed=time.time()):
     for i, p in enumerate(probs):
         if p >= rand:
             return results.keys()[i]
+
+
+# ---- t13 ----
+def test_preformance(test_set, training_set, beta=0, trials=50, testprob=0.2):
+    error = 0.0
+    tree = cross_validate(training_set, beta, trials, testprob)
+    for prot in test_set:
+        results = classify(prot[:-1],tree)
+        tree_result = roulette(results)
+        real_result = prot[-1]
+        if tree_result != real_result:
+            error+=1
+    return error/len(testset)
+
+def cross_validate(training_set, beta, trials, testprob):
+    best_tree = None
+    min_error = 1.0 # Maxim error
+    for i in xrange(trials):
+        train_set, testset = divide_data(training_set,testprob)
+        error, tree= test_set(train_set,training_set,beta)
+        if error == 0.0: return tree #Estalviar temps
+        if error < min_error:
+            min_error=error
+            best_tree=tree
+    return best_tree
+
+def test_set(test_set, training_set, beta):
+    if len(test_set)==0 : return 1, None
+    tree = buildtree(trainingset, beta=beta)
+    error=0.0
+    for prot in test_set:
+        results = classify(prot[:-1],tree)
+        tree_result = roulette(results)
+        real_result = prot[-1]
+        if tree_result != real_result:
+            error+=1
+
+    return error/len(test_set), tree
+
+def divide_data(data, testprob):
+    random.seed(time.time())
+    training = []
+    test = []
+    for i in data:
+        (test if random.random() < testprob else training).append(i)
+
+    return training, test
+
 
 # ---- t16 ----
 def prune(tree, beta):
@@ -304,5 +350,6 @@ if __name__ == '__main__':
     protos = read_stream(options.prototypes_file, options.data_sep, True)
 
     # **** Your code here ***
-    tree = buildtree_iterative(protos)
-    printtree(tree)
+    tree = buildtree_iterative(protos, 0.3)
+    train_set, test_set = divide_data(protos)
+    print test_preformance(train_set, test_set, 0.3)

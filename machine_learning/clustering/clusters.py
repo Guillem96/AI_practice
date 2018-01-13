@@ -18,6 +18,14 @@ def readfile(filename):
     return rownames,colnames,data
 
 
+def euclidean(v1, v2):
+    total = 0.0
+    for i in range(len(v1)):
+        total += pow(v1[i] - v2[i],2)
+
+    return sqrt(total)
+
+
 def pearson(v1,v2):
     # Simple sums
     sum1 = sum(v1)
@@ -73,6 +81,7 @@ def hcluster(rows,distance=pearson):
         clust.append(newcluster)
     return clust[0]
 
+
 def printclust(clust,labels=None,n=0):
     # indent to make a hierarchy layout
     for i in range(n): print ' ',
@@ -124,6 +133,17 @@ def kcluster(rows,distance=pearson,k=4):
                     for m in range(len(rows[rowid])):
                         avgs[m]+=rows[rowid][m]
                 for j in range(len(avgs)):
-                    avgs[j]/=len(bestmatches[i])
+                    avgs[j] /= len(bestmatches[i])
                 clusters[i]=avgs
-    return bestmatches
+
+    total_distance = 0.0
+    for cluster, best_match in enumerate(bestmatches):
+        for item in best_match:
+            total_distance += pow(euclidean(clusters[cluster], rows[item]), 2)
+    return total_distance, bestmatches
+
+def total_distance_k(rows, init_k=2, end_k=20):
+    with open('distance_as_function_k.txt', 'w') as f:
+        for i in range(init_k, end_k):
+            td, _ = kcluster(rows, k=i)
+            f.write(str(i) + "\t" + str(float("{0:.2f}".format(td)))+"\n")
