@@ -306,5 +306,3 @@ if __name__ == '__main__':
     # **** Your code here ***
     tree = buildtree_iterative(protos)
     printtree(tree)
-    prune(tree, 1)
-    printtree(tree)
