@@ -298,13 +298,13 @@ def divide_data(data, testprob):
 # ---- t15 ----
 def fill_missingdata(data,missingvalue=None):
     col_info=[] # [(type, median/prob_list),...]
-    for i in xrange(len(data[0])):
+    for i in xrange(len(data[0])-1): #-1 to avoid solution
         col_list = map(lambda r: r[i], data)
         col_type=find_type(col_list,missingvalue)
         if col_type == 'str':
-            info=unique_counts(col_list)
+            info=md_uniquecounts(col_list,missingvalue)
         else:
-            info=median(col_list)
+            info=median(col_list,missingvalue)
         col_info.append((col_type,info))
 
     for row, prot in enumerate(data):
@@ -385,5 +385,6 @@ if __name__ == '__main__':
 
     # **** Your code here ***
     training, test = divide_data(protos,0.2)
-    print 'Test preformance: ' + str((1-test_preformance(training,test,0.3,100,0.2))*100) + '%'
-
+    error_prob=test_preformance(training,test,0.3,100,0.2)
+    print 'Test preformance: ' + str((1-error_prob)*100) + '%'
+    fill_missingdata(protos,'5more')
