@@ -274,14 +274,12 @@ def cross_validate(trainingset, beta, trials, testprob):
 
 def test_set(testset, trainingset, beta):
     if len(testset)==0 : return 1, None
-    print 'a'
     tree = buildtree(trainingset,beta=beta)
     error=0.0
     for prot in testset:
         results = classify(prot[:-1],tree)
         tree_result = roulette(results)
         real_result = prot[-1]
-        #print str(tree_result) + ' ' + str(real_result)
         if tree_result != real_result:
             error+=1
     
@@ -297,6 +295,66 @@ def divide_data(data, testprob):
         else:
             training.append(i)
     return training, test
+# ---- t15 ----
+def fill_missingdata(data,missingvalue=None):
+    col_info=[] # [(type, median/prob_list),...]
+    for i in xrange(len(data[0])):
+        col_list = map(lambda r: r[i], data)
+        col_type=find_type(col_list,missingvalue)
+        if col_type == 'str':
+            info=unique_counts(col_list)
+        else:
+            info=median(col_list)
+        col_info.append((col_type,info))
+
+    for row, prot in enumerate(data):
+        for col, value in enumerate(prot):
+            if value == missingvalue:
+                if col_info[col][0] == 'str':
+                    data[row][col]=roulette(col_info[col][1])
+                else:
+                    data[row][col]=col_info[col][1]
+
+def find_type(data,missingvalue):
+    for value in data:
+         if not isinstance(value, (int, float)) and value != missingvalue:
+                return 'str'
+    return 'num' 
+
+def md_uniquecounts(data,missingvalue):
+    counts={}
+    for value in data:
+        if value != missingvalue:
+            counts[value] = counts.get(value, 0) + 1
+    return counts
+
+def median(data,missingvalue):
+    filtered_data=list(filter(lambda x: x != missingvalue, data))
+    return filtered_data[len(filtered_data)/2]
+
+
+# ---- t16 ----
+def prune(tree, beta):
+    if not tree.tb.is_leaf():
+        prune(tree.tb, beta)
+
+    if not tree.fb.is_leaf():
+        prune(tree.fb, beta)
+
+    if tree.tb.is_leaf() and tree.fb.is_leaf():
+        # Build a combined dataset
+        tb, fb = [], []
+        for v, c in tree.tb.results.items( ):
+            tb += [[v]] * c
+        for v, c in tree.fb.results.items( ):
+            fb += [[v]] * c
+
+        # Test the reduction in entropy
+        delta = imp_increment(tb, fb, entropy)
+        if delta < beta:
+            # Merge the branches
+            tree.tb, tree.fb = None, None
+            tree.results = unique_counts(tb + fb)
 # ------------------------ #
 #        Entry point       #
 # ------------------------ #
