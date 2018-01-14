@@ -399,7 +399,7 @@ def cornersHeuristic(state, problem):
         if eaten == 0:
             dist += util.manhattanDistance(state[0], corners[index])
 
-    return dist ** 175
+    return dist
 
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"

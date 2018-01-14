@@ -27,7 +27,6 @@ def read_stream(stream, data_sep=' ', ignore_first_line=False):
 
     return prototypes
 
-
 def filter_token(token):
     try:
         return int(token)
@@ -39,7 +38,6 @@ def filter_token(token):
 
 
 # ---- t4 ----
-
 def unique_counts(part):
     # return collections.Counter(row[-1] for row in part)
     counts = {}
@@ -224,7 +222,7 @@ def classify(obj, tree):
     def split_num(prot): return prot[current_node.col] >= current_node.value
     def split_str(prot): return prot[current_node.col] == current_node.value
 
-    while not current_node.isLeaf():
+    while not current_node.is_leaf():
         split_fn = split_num if isinstance(current_node.value, (int, float)) else split_str
         if split_fn(obj):
             current_node = current_node.tb
@@ -261,24 +259,27 @@ def test_preformance(test_set, training_set, beta=0, trials=50, testprob=0.2):
         real_result = prot[-1]
         if tree_result != real_result:
             error+=1
-    return error/len(testset)
+    return error/len(test_set)
 
+# Test the training set between its items, and returns the best tree
 def cross_validate(training_set, beta, trials, testprob):
     best_tree = None
     min_error = 1.0 # Maxim error
     for i in xrange(trials):
         train_set, testset = divide_data(training_set,testprob)
-        error, tree= test_set(train_set,training_set,beta)
+        error, tree = test_set(testset,train_set,beta)
         if error == 0.0: return tree #Estalviar temps
         if error < min_error:
             min_error=error
             best_tree=tree
     return best_tree
 
+# Builds a tree and test it.
 def test_set(test_set, training_set, beta):
-    if len(test_set)==0 : return 1, None
-    tree = buildtree(trainingset, beta=beta)
-    error=0.0
+    # If no test set return the highest error and None as a tree
+    if len(test_set) == 0 : return 1, None
+    tree = buildtree(training_set, beta=beta)
+    error = 0.0
     for prot in test_set:
         results = classify(prot[:-1],tree)
         tree_result = roulette(results)
@@ -288,6 +289,7 @@ def test_set(test_set, training_set, beta):
 
     return error/len(test_set), tree
 
+# Divide the prototipes randomly in a training set and a test set
 def divide_data(data, testprob):
     random.seed(time.time())
     training = []
@@ -296,6 +298,55 @@ def divide_data(data, testprob):
         (test if random.random() < testprob else training).append(i)
 
     return training, test
+
+# ---- t15 ----
+# data are the prototypes
+# missing value is the value of missing atributes at the time of reading the file
+def fill_missingdata(data, missing_value='None'):
+    col_info=[] # [(type, median/prob_list),...]
+    for i in xrange(len(data[0]) - 1): #-1 to avoid solution
+        col_list = map(lambda r: r[i], data)
+        col_type = find_type(col_list,missing_value)
+        if col_type == 'str':
+            info = md_uniquecounts(col_list, missing_value)
+        else:
+            info = median(col_list,missing_value)
+
+        col_info.append((col_type, info))
+
+    for row, prot in enumerate(data):
+        for col, value in enumerate(prot):
+            if value == missing_value:
+                if col_info[col][0] == 'str':
+                    data[row][col]=roulette(col_info[col][1])
+                else:
+                    data[row][col]=col_info[col][1]
+
+# Get the type of a columne
+# If only one element of the column is categorical -> type = categorical
+def find_type(data_list,missing_value):
+    for value in data_list:
+        if not isinstance(value, (int, float)) and value != missing_value:
+            return 'str'
+    return 'num'
+
+
+# unique counts implementation with missing data
+def md_uniquecounts(data_list,missing_value):
+    counts={}
+    for value in data_list:
+        if value != missing_value:
+            counts[value] = counts.get(value, 0) + 1
+    return counts
+
+
+# Median of the list
+def median(data_list, missing_value):
+    filtered_data=list(filter(lambda x: x != missing_value, data_list))
+    if len(filtered_data) % 2 == 0:
+        return (filtered_data[len(filtered_data)/2] + \
+                filtered_data[len(filtered_data)/2 + 1]) / 2.0
+    return filtered_data[len(filtered_data)/2]
 
 
 # ---- t16 ----
@@ -310,7 +361,7 @@ def prune(tree, beta):
         # Build a combined dataset
         tb, fb = [], []
         for v, c in tree.tb.results.items( ):
-            tb += [[v]] * c
+            tb += [[v]] * c # Generate the list only with the solutions
         for v, c in tree.fb.results.items( ):
             fb += [[v]] * c
 
@@ -320,6 +371,20 @@ def prune(tree, beta):
             # Merge the branches
             tree.tb, tree.fb = None, None
             tree.results = unique_counts(tb + fb)
+
+
+# ---- El percentatge d'acert respecte la probabilitat de tenir elements en el test-set ----
+def success_in_function_as_test_prob(data,test_prob_max=0.5, tries=1.0, beta=0.2, cross_tries=5):
+    with open('success_testprob.txt', 'w') as f:
+        f.write('# ' + 'test_set range: 0.1-' + str(test_prob_max) + "\n")
+        f.write('# ' + 'cross validation tries: ' + str(cross_tries) + "\n")
+        f.write('# test probability\tpreformance\n')
+        test_prob = 0.1
+        for i in xrange(tries+1):
+            train, test = divide_data(data, test_prob)
+            test_prob = test_prob_max * i/tries + 0.1 #Calcular la beta de la iteracion
+            error_prob = test_preformance(train, test, beta, cross_tries, test_prob)
+            f.write(str(test_prob) + '\t' "{0:.2f}".format((1-error_prob)*100) + "\n")
 
 # ------------------------ #
 #        Entry point       #
@@ -348,8 +413,16 @@ if __name__ == '__main__':
 
     # Example code
     protos = read_stream(options.prototypes_file, options.data_sep, True)
+    fill_missingdata(protos,'unknown')
 
     # **** Your code here ***
-    tree = buildtree_iterative(protos, 0.3)
-    train_set, test_set = divide_data(protos)
-    print test_preformance(train_set, test_set, 0.3)
+    training, test = divide_data(protos,0.4)
+    print "---- t14 ----"
+    print "Proves realitzades amb " + str(len(protos)) + " instancies amb " + str(len(protos[0])) + " atributs."
+    print "Amb 100 iteracions en el cross-validation."
+    error_prob = test_preformance(training,test, 0, 100, 0.4)
+    print 'Test preformance training_set 60 - test_set 40: ' "{0:.2f}".format((1-error_prob)*100) + '%'
+    error_prob = test_preformance(training,test, 0, 100, 0.2)
+    print 'Test preformance training_set 80 - test_set 20: ' "{0:.2f}".format((1-error_prob)*100) + '%'
+
+    #success_in_function_as_test_prob(protos, tries=20)

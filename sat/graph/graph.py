@@ -59,10 +59,16 @@ class Graph(object):
                     msat.add_clause([-x, -y], 0)  # 0 weight means top
         return msat
 
-    def max_cut_to_maxsat(self):
+    def max_cut_to_maxsat(self): # maxcut = r - e
         msat = wcnf.WCNFFormula()
-        # **** Your code here ****
-
+        added = []
+        for _ in xrange(self.num_nodes):
+            msat.new_var()
+        for n1,n2 in self.edges:
+            if [n2,n1] not in added:
+                msat.add_clause([-n1,-n2],1)
+                msat.add_clause([n1,n2],1)
+                added.append([n1,n2])
         return msat
 
 
@@ -77,9 +83,8 @@ if __name__ == '__main__':
 
         mcliquemsat = g.max_clique_to_maxsat()
         mcliquemsat.write_dimacs_file('mclique.wcnf')
-        # mcliquemsat.to_1_3().write_dimacs_file('mclique_1_3.wcnf')
+        mcliquemsat.to_1_3().write_dimacs_file('mclique_1_3.wcnf')
 
         mcutmsat = g.max_cut_to_maxsat()
         mcutmsat.write_dimacs_file('mcut.wcnf')
-        # mcutmsat.to_1_3().write_dimacs_file('mcut_1_3.wcnf')
-        #
+        mcutmsat.to_1_3().write_dimacs_file('mcut_1_3.wcnf')
