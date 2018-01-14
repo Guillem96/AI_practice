@@ -6,7 +6,6 @@ import sys
 
 import wcnf
 
-
 class Graph(object):
 
     def __init__(self):
