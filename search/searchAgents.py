@@ -4,7 +4,7 @@
 # educational purposes provided that (1) you do not distribute or publish
 # solutions, (2) you retain this notice, and (3) you provide clear
 # attribution to UC Berkeley, including a link to http://ai.berkeley.edu.
-# 
+#
 # Attribution Information: The Pacman AI projects were developed at UC Berkeley.
 # The core projects and autograders were primarily created by John DeNero
 # (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
@@ -288,6 +288,14 @@ class CornersProblem(search.SearchProblem):
         # Please add any code here which you would like to use
         # in initializing the problem
         "*** YOUR CODE HERE ***"
+        self._visited, self._visitedlist = {}, []
+        self.corners_state = [0 for _ in self.corners]
+        for index, corner in enumerate(self.corners):
+            if not startingGameState.hasFood(*corner):
+                self.corners_state[index] = 1
+
+        self.costFn = lambda x : 1
+
 
     def getStartState(self):
         """
@@ -295,14 +303,24 @@ class CornersProblem(search.SearchProblem):
         space)
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return (self.startingPosition, tuple(self.corners_state))
 
     def isGoalState(self, state):
         """
         Returns whether this search state is a goal state of the problem.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        isGoal = all(x == 1 for x in state[1])
+
+         # For display purposes only
+        if isGoal:
+            self._visitedlist.append(state[0])
+            import __main__
+            if '_display' in dir(__main__):
+                if 'drawExpandedCells' in dir(__main__._display): #@UndefinedVariable
+                    __main__._display.drawExpandedCells(self._visitedlist) #@UndefinedVariable
+
+        return isGoal
 
     def getSuccessors(self, state):
         """
@@ -314,17 +332,29 @@ class CornersProblem(search.SearchProblem):
             state, 'action' is the action required to get there, and 'stepCost'
             is the incremental cost of expanding to that successor
         """
-
+        import copy
         successors = []
         for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
-            # Add a successor state to the successor list if the action is legal
-            # Here's a code snippet for figuring out whether a new position hits a wall:
-            #   x,y = currentPosition
-            #   dx, dy = Actions.directionToVector(action)
-            #   nextx, nexty = int(x + dx), int(y + dy)
-            #   hitsWall = self.walls[nextx][nexty]
+            (x,y) = state[0]
+            dx, dy = Actions.directionToVector(action)
+            nextx, nexty = int(x + dx), int(y + dy)
+            if not self.walls[nextx][nexty]:
 
-            "*** YOUR CODE HERE ***"
+                nextState = (nextx, nexty)
+                food_eaten = list(state[1])
+
+                from copy import deepcopy
+                if nextState in self.corners:
+                  index = self.corners.index(nextState)
+                  food_eaten[index] = 1
+
+                cost = self.costFn(nextState)
+                successors.append( ( (nextState, tuple(food_eaten)), action, cost) )
+
+        # Bookkeeping for display purposes
+        if state not in self._visited:
+            self._visited[state] = True
+            self._visitedlist.append(state[0])
 
         self._expanded += 1 # DO NOT CHANGE
         return successors
@@ -356,12 +386,18 @@ def cornersHeuristic(state, problem):
     shortest path from the state to a goal of the problem; i.e.  it should be
     admissible (as well as consistent).
     """
+
     corners = problem.corners # These are the corner coordinates
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
+    total_manhattan = 0
+    position = state[0]
 
-    "*** YOUR CODE HERE ***"
-    return 0 # Default to trivial solution
+    dist = 0
 
+    for index, eaten in enumerate(state[1]):
+        if eaten == 0:
+            dist += util.manhattanDistance(state[0], corners[index])
+    return dist 
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
     def __init__(self):

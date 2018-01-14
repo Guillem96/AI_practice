@@ -145,7 +145,7 @@ def aStarSearch(problem, heuristic=nullHeuristic):
             generated[n.state] = [n, 'E']
             for s,a,c in problem.getSuccessors(n.state):
                 fn = max(n.cost + c + heuristic(s, problem), n.cost + heuristic(n.state, problem)) #pathmax
-                ns = Node(s,n,a,fn)
+                ns = node.Node(s,n,a,fn)
                 if ns.state not in generated:
                     push(ns)
                 elif ns.cost < generated[ns.state][0].cost: # guillem - >Saber perque no cal controlar que esta al fringe
