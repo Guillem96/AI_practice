@@ -37,10 +37,3 @@ class Node:
         #res = self.r_path(self)
         #res.reverse()
         #return res
-
-if __name__ == '__main__':
-    n1 = Node("State1", None, "South")
-    n2 = Node("State2", n1, "West")
-    n3 = Node("State3", n2, "North")
-
-    print n3.path()

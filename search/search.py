@@ -100,11 +100,11 @@ def bsfOrDfs(fringe, problem):
                 fringe.push(ns)
                 generated[s] = []
 
-def ucsFn(node, c, heuristic):
-    return node.cost + c
+def ucsFn(current_node, successor, heuristic, problem):
+    return 0
 
-def astarFn(node, c, heuristic):
-    return max(node.cost + c + heuristic(s, problem), node.cost + heuristic(node.state, problem))
+def astarFn(current_node, successor, heuristic, problem):
+    return max(current_node.cost + successor.cost + heuristic(successor.state, problem), current_node.cost + heuristic(current_node.state, problem))
 
 # For ucs heuristic won't have any efect
 # fringe will be PriorityQueue for both
@@ -130,7 +130,8 @@ def ucsOrAStar(fn, heuristic, problem):
         generated[n.state] = [n, "E"]
 
         for s, a, c in problem.getSuccessors(n.state):
-            ns = Node(s, n, a, fn(n, c, heuristic))
+            ns = Node(s, n, a)
+            ns.cost = fn(n, ns, heuristic, problem)
             if s not in generated.keys():
                 fringe.push(ns, ns.cost)
                 generated[s] = [ns, "F"]
@@ -166,8 +167,7 @@ def breadthFirstSearch(problem):
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
     "*** YOUR CODE HERE ***"
-    ucsOrAStar(ucsFn, heuristic, problem)
-
+    return ucsOrAStar(ucsFn, None, problem)
 
 def nullHeuristic(state, problem=None):
     """
@@ -179,7 +179,7 @@ def nullHeuristic(state, problem=None):
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
-    ucsOrAStar(astarFn, heuristic, problem)
+    return ucsOrAStar(astarFn, heuristic, problem)
 
 
 # Abbreviations
