@@ -12,4 +12,4 @@ class decisionnode:
         self.answer = answer
 
     def is_leaf(self):
-        return self.results != None 
+        return self.results != None
