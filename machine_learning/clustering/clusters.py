@@ -102,11 +102,13 @@ def printclust(clust,labels=None,n=0):
         printclust(clust.right,labels=labels,n=n+1)
 
 
+# Without restart polices, used for getting information to improve the result of tha algorithm
+# when using restart polices
 def _kcluster(rows,distance=pearson,k=4, trials=100, clusters=None):
     if not clusters:
         clusters = []
-        for i in range(k):
-            clusters.append(generate_random_clusters(rows, i))
+        for k in range(k):
+            clusters.append(generate_random_clusters(rows))
 
     lastmatches = None
     for t in range(trials):
@@ -142,7 +144,7 @@ def _kcluster(rows,distance=pearson,k=4, trials=100, clusters=None):
     return sum(centroide_distances), bestmatches, centroide_distances
 
 
-def generate_random_clusters(rows, i):
+def generate_random_clusters(rows):
     # Determine the minimum and maximum values for each point
     ranges=[(min([row[i] for row in rows]),
             max([row[i] for row in rows])) for i in range(len(rows[0]))]
@@ -151,7 +153,7 @@ def generate_random_clusters(rows, i):
             ranges[i][0] for i in range(len(rows[0]))]
 
 
-# Kcluster amb restart polices
+# Kcluster with restart polices
 def kcluster(rows, distance=euclidean, k=4, trials=100, groups=5, beta=100):
     # Lo important es tenir un centroide amb molts items i a poca distancia d'ells
     # Beta -> relacio optima distancia/num_items
@@ -162,8 +164,8 @@ def kcluster(rows, distance=euclidean, k=4, trials=100, groups=5, beta=100):
     last_clusters = []
 
     # Generate k centroides
-    for i in range(k):
-        last_clusters.append(generate_random_clusters(rows, i))
+    for _ in range(k):
+        last_clusters.append(generate_random_clusters(rows))
 
     for _ in xrange(groups):
         td, clusters_items, clusters_dist = _kcluster(rows, distance, k, iters_per_alg, clusters=copy.deepcopy(last_clusters))
@@ -178,7 +180,7 @@ def kcluster(rows, distance=euclidean, k=4, trials=100, groups=5, beta=100):
                                 enumerate(clusters_dist)))
         for i in range(k):
             if i not in min_dist_clusters:
-                last_clusters[i] = generate_random_clusters(rows, i)
+                last_clusters[i] = generate_random_clusters(rows)
 
     return min_td, best_clusters_assign
 
@@ -195,7 +197,6 @@ def total_distance_k(rows, init_k=2, end_k=20, restart_polices=True, path='dista
             f.write(str(i) + "\t" + "{0:.2f}".format(td) + "\n")
 
 if __name__ == "__main__":
-    # Grafica sense restart polices
-    # bn, w, d = readfile("blogdata.txt")
-    # total_distance_k(d)
-    # total_distance_k(d, restart_polices=False, path="distance_as_function_k_nrp.txt")
+    bn, w, d = readfile("blogdata.txt")
+    total_distance_k(d)
+    total_distance_k(d, restart_polices=False, path="distance_as_function_k_nrp.txt")

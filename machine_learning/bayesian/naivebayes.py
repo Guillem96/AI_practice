@@ -1,10 +1,10 @@
 from docclass import getwords
-import classifier
+from classifier import classifier
 
 # -- t9 --
 class naivebayes(classifier.classifier):
     def __init__(self,getfeatures):
-        classifier.classifier.__init__(self, getfeatures)
+        classifier.__init__(self, getfeatures)
         self.thresholds={}
 
     def setthreshold(self,cat,t):
@@ -41,7 +41,6 @@ class naivebayes(classifier.classifier):
         # Make sure the probability exceeds threshold*next best
         for cat in probs:
             if cat == best: continue
-            print self.getthreshold(cat)
             if maximum < probs[cat] * self.getthreshold(best):
                 return default
         return best
@@ -49,7 +48,7 @@ class naivebayes(classifier.classifier):
 
 if __name__ == "__main__":
     cl = naivebayes(getwords)
-    classifier.classifier.sampletrain(cl)
+    classifier.sampletrain(cl)
     print "'quick rabbit' is: " + str(cl.classify('quick rabbit', default='unknown'))
     print "'quick money' is: " + str(cl.classify('quick money', default='unknown'))
     cl.setthreshold('bad',1.0)

@@ -77,28 +77,66 @@ def tinyMazeSearch(problem):
 
 
 def bsfOrDfs(fringe, problem):
-        fringe.push(Node(problem.getStartState()))
-        # Hash de estats expandits
-        generated = {}
+    fringe.push(Node(problem.getStartState()))
+    # Hash de estats expandits
+    generated = {}
 
-        while True:
-            if fringe.isEmpty():
-                print "No solution."
-                sys.exit(-1)
+    while True:
+        if fringe.isEmpty():
+            print "No solution."
+            sys.exit(-1)
 
-            n = fringe.pop()
-            # n passa a ser un nodo expandit
-            generated[n.state] = []
+        n = fringe.pop()
+        # n passa a ser un nodo expandit
+        generated[n.state] = []
 
-            for s, a, c in problem.getSuccessors(n.state):
-                ns = Node(s, n, a, c)
-                if s not in generated.keys():
-                    if problem.isGoalState(ns.state):
-                        print "Solution"
-                        return ns.path()
+        for s, a, c in problem.getSuccessors(n.state):
+            ns = Node(s, n, a, c)
+            if s not in generated.keys():
+                if problem.isGoalState(ns.state):
+                    print "Solution"
+                    return ns.path()
 
-                    fringe.push(ns)
-                    generated[s] = []
+                fringe.push(ns)
+                generated[s] = []
+
+def ucsFn(node, c, heuristic):
+    return node.cost + c
+
+def astarFn(node, c, heuristic):
+    return max(node.cost + c + heuristic(s, problem), node.cost + heuristic(node.state, problem))
+
+# For ucs heuristic won't have any efect
+# fringe will be PriorityQueue for both
+def ucsOrAStar(fn, heuristic, problem):
+    generated = {}
+    fringe = PriorityQueue()
+    n = Node(problem.getStartState(),0)
+    fringe.push(n, 0)
+    generated[n.state] = [n, "F"]
+
+    while True:
+        if fringe.isEmpty():
+            print "No solution."
+            sys.exit(-1)
+
+        n = fringe.pop()
+        if generated[n.state][1] == "E": break
+
+        if problem.isGoalState(n.state):
+            return n.path()
+
+        # n passa a ser un nodo expandit
+        generated[n.state] = [n, "E"]
+
+        for s, a, c in problem.getSuccessors(n.state):
+            ns = Node(s, n, a, fn(n, c, heuristic))
+            if s not in generated.keys():
+                fringe.push(ns, ns.cost)
+                generated[s] = [ns, "F"]
+            elif generated[s][0].cost > ns.cost:
+                fringe.push(ns, ns.cost)
+                generated[s] = [ns, "F"]
 
 
 def depthFirstSearch(problem):
@@ -128,34 +166,8 @@ def breadthFirstSearch(problem):
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
     "*** YOUR CODE HERE ***"
-    generated = {}
-    fringe = PriorityQueue()
-    n = Node(problem.getStartState(),0)
-    fringe.push(n, 0)
-    generated[n.state] = [n, "F"]
+    ucsOrAStar(ucsFn, heuristic, problem)
 
-    while True:
-        if fringe.isEmpty():
-            print "No solution."
-            sys.exit(-1)
-
-        n = fringe.pop()
-        if generated[n.state][1] == "E": break
-
-        if problem.isGoalState(n.state):
-            return n.path()
-
-        # n passa a ser un nodo expandit
-        generated[n.state] = [n, "E"]
-
-        for s, a, c in problem.getSuccessors(n.state):
-            ns = Node(s, n, a, n.cost + c)
-            if s not in generated.keys():
-                fringe.push(ns, ns.cost)
-                generated[s] = [ns, "F"]
-            elif generated[s][0].cost > ns.cost:
-                fringe.push(ns, ns.cost)
-                generated[s] = [ns, "F"]
 
 def nullHeuristic(state, problem=None):
     """
@@ -167,36 +179,7 @@ def nullHeuristic(state, problem=None):
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
-    generated = {}
-    fringe = PriorityQueue()
-    n = Node(problem.getStartState(),0)
-    fringe.push(n, 0)
-    generated[n.state] = [n, "F"]
-
-    while True:
-        if fringe.isEmpty():
-            print "No solution."
-            sys.exit(-1)
-
-        n = fringe.pop()
-        if generated[n.state][1] == "E": break
-
-        if problem.isGoalState(n.state):
-            return n.path()
-
-        # n passa a ser un nodo expandit
-        generated[n.state] = [n, "E"]
-
-        for s, a, c in problem.getSuccessors(n.state):
-            #path-max
-            fn = max(n.cost + c + heuristic(s, problem), n.cost + heuristic(n.state, problem))
-            ns = Node(s, n, a, fn)
-            if s not in generated.keys():
-                fringe.push(ns, ns.cost)
-                generated[s] = [ns, "F"]
-            elif generated[s][0].cost > ns.cost: # Saber perque no cal controlar que esta al fringe
-                fringe.push(ns, ns.cost)
-                generated[s] = [ns, "F"]
+    ucsOrAStar(astarFn, heuristic, problem)
 
 
 # Abbreviations
