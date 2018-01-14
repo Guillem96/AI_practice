@@ -230,13 +230,16 @@ def formula_to_1_3_wpm(formula):
 
 def __convert_soft(f, soft):
     # Generate new soft
-    new_literal = f.new_var()
-    f.add_clause([new_literal * -1],  soft[0])
+    if len(soft[1]) == 1:
+        f.add_clause(soft[1],soft[0])
+    else:
+        new_literal = f.new_var()
+        f.add_clause([new_literal * -1],  soft[0])
 
-    soft[1].append(new_literal)
+        soft[1].append(new_literal)
 
-    if len(soft[1]) > 1:
-        __convert_hard(f, soft[1])
+        if len(soft[1]) > 1:
+            __convert_hard(f, soft[1])
 
 
 def __convert_hard(f, hard):
